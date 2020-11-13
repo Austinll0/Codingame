@@ -1,0 +1,106 @@
+import sys
+import math
+import numpy as np
+
+
+# Auto-generated code below aims at helping you parse
+# the standard input according to the problem statement.
+
+class Action: #lawsuit
+    def __init__(self):
+        # action_id: the unique ID of this spell or recipe
+        # action_type: in the first league: BREW; later: CAST, OPPONENT_CAST, LEARN, BREW
+        # delta_0: tier-0 ingredient change
+        # delta_1: tier-1 ingredient change
+        # delta_2: tier-2 ingredient change
+        # delta_3: tier-3 ingredient change
+        # price: the price in rupees if this is a potion
+        # tome_index: in the first two leagues: always 0; later: the index in the tome if this is a tome spell, equal to the read-ahead tax
+        # tax_count: in the first two leagues: always 0; later: the amount of taxed tier-0 ingredients you gain from learning this spell
+        # castable: in the first league: always 0; later: 1 if this is a castable player spell
+        # repeatable: for the first two leagues: always 0; later: 1 if this is a repeatable player spell
+        
+        action_id, action_type, delta_0, delta_1, delta_2, delta_3, price, tome_index, tax_count, castable, repeatable = input().split()
+        self.action_id = int(action_id)
+        self.action_type = action_type
+        self.delta = [int(delta_0), int(delta_1) , int(delta_2), int(delta_3)]
+        self.price = int(price)
+        self.tome_index = int(tome_index)
+        self.tax_count = int(tax_count)
+        self.castable = castable != "0"
+        self.repeatable = repeatable != "0"
+
+    def cast(self,numTimes):
+        # in the first league: BREW <id> | WAIT; later: BREW <id> | CAST <id> [<times>] | LEARN <id> | REST | WAIT
+        print(self.action_type + " %d %d" % (self.action_id, numTimes))
+    
+    def findCast(self,witch,spells):
+        for i in range(4):
+            if witch.inv[i] + self.delta[i] < 0:
+                for s in spells:
+                    if witch.inv[i] + s.delta[i] > witch.inv[i]:
+                        if(witch.canCast(s)):
+                            s.cast(1)
+                            return True
+                        elif s.findCast(witch,spells):
+                            return True
+        return False
+
+
+class Witch:
+    def __init__(self):
+        # inv_0: tier-0 ingredients in inventory
+        # score: amount of rupees
+        inv_0, inv_1, inv_2, inv_3, score = [int(j) for j in input().split()]
+        self.inv = [inv_0, inv_1, inv_2, inv_3]
+        self.score = score
+
+    def canCast(self,action):
+        if(action.action_type == "CAST"):
+            if(not action.castable):
+                return False
+
+        for i in range(4):
+            if(self.inv[i] + action.delta[i] < 0):
+                return False
+        return True
+    def printInv(self):
+        print("inv: %i %i %i %i" % (self.inv[0],self.inv[1],self.inv[2],self.inv[3]), file=sys.stderr, flush=True)
+
+
+
+
+# game loop
+while True:
+    action_count = int(input())  # the number of spells and recipes in play
+    witches = []
+    potions = []
+    spells = []
+
+    for i in range(action_count):
+        a = Action()
+        if a.action_type == "CAST":
+            spells.append(a)
+        elif a.action_type == "BREW":
+            potions.append(a)
+            
+
+    for i in range(2):
+        witches.append(Witch())
+        
+
+    # Write an action using print
+    # To debug: print("Debug messages...", file=sys.stderr, flush=True)
+    target = potions[0]
+    for p in potions:
+        if p.price > target.price:
+            target = p
+
+    if witches[0].canCast(target):
+        witches[0].printInv()
+        target.cast(1)
+    elif not target.findCast(witches[0],spells):
+        print("REST")
+
+
+    
