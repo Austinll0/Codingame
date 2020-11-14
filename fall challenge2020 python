@@ -32,18 +32,25 @@ class Action: #lawsuit
 
     def cast(self,numTimes):
         # in the first league: BREW <id> | WAIT; later: BREW <id> | CAST <id> [<times>] | LEARN <id> | REST | WAIT
+        if not self.repeatable:
+            numTimes = 1
         print(self.action_type + " %d %d" % (self.action_id, numTimes))
     
     def findCast(self,witch,spells):
+        A = []
+        for s in spells:
+            A.append(s.delta)
+        A = np.transpose(A)
+        Cost = [0,0,0,0]
         for i in range(4):
-            if witch.inv[i] + self.delta[i] < 0:
-                for s in spells:
-                    if witch.inv[i] + s.delta[i] > witch.inv[i]:
-                        if(witch.canCast(s)):
-                            s.cast(1)
-                            return True
-                        elif s.findCast(witch,spells):
-                            return True
+            Cost[i] = -self.delta[i] - witch.inv[i]
+        X = np.linalg.inv(A).dot(Cost)
+        print(Cost, file=sys.stderr, flush=True)
+        print(X, file=sys.stderr, flush=True)
+        for i in range(4):
+            if X[i] > 0 and witch.canCast(spells[i]):
+                spells[i].cast(X[i])
+                return True
         return False
 
 
@@ -63,9 +70,20 @@ class Witch:
         for i in range(4):
             if(self.inv[i] + action.delta[i] < 0):
                 return False
+
         return True
     def printInv(self):
         print("inv: %i %i %i %i" % (self.inv[0],self.inv[1],self.inv[2],self.inv[3]), file=sys.stderr, flush=True)
+    
+    def turnsToCast(Vector,spells):
+        turns = 0
+        for i in range(len(vector)):
+            if spells[i].repeatable:
+                if Vector[i] > 0:
+                    turns = turns + 1
+            else:
+                turns = turns + Vector[i]
+        turns = turns + max(Vector)
 
 
 
