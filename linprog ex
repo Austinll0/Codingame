@@ -1,0 +1,20 @@
+import numpy as np
+from scipy import optimize
+
+c = np.zeros(4)
+
+A_ub = np.array([[-1,0,0,0],
+                [0,-1,0,0],
+                [0,0,-1,0],
+                [0,0,0,-1],
+                [-2,1,0,0],
+                [0,-1,1,0],
+                [0,0,-1,1],
+                [0,0,0,-1]])
+
+b_ub = np.array([0,0,0,0,1,1,-1,2])
+
+
+x = optimize.linprog(c, A_ub, b_ub, method="revised simplex")
+
+print(x)
